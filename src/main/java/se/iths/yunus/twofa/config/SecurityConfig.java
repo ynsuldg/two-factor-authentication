@@ -18,6 +18,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/register",
+                                "/register/confirm-2fa",
                                 "/login",
                                 "/verify-2fa",
                                 "/reset-password"
