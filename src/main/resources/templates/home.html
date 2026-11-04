@@ -22,5 +22,22 @@
     <button type="submit">Logout</button>
 </form>
 
+<h2>Delete account</h2>
+
+<p>This permanently deletes your account. Confirm with your current password.</p>
+
+<p th:if="${error}" th:text="${error}" style="color:red;"></p>
+
+<form method="post" th:action="@{/delete-account}">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+    <div>
+        <label>Current password</label>
+        <input type="password" name="password" required>
+    </div>
+
+    <button type="submit">Delete account</button>
+</form>
+
 </body>
 </html>
