@@ -18,9 +18,12 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/register",
+                                "/register/confirm-2fa",
                                 "/login",
                                 "/verify-2fa",
-                                "/reset-password"
+                                "/reset-password",
+                                "/reset-2fa",
+                                "/reset-2fa/confirm"
                         ).permitAll()
                         .requestMatchers("/").authenticated()
                         .anyRequest().authenticated()

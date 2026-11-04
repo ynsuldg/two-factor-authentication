@@ -1,5 +1,6 @@
 package se.iths.yunus.twofa.controller;
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,6 +14,8 @@ import se.iths.yunus.twofa.service.TwoFactorService;
 
 @Controller
 public class RegisterController {
+    private static final String PENDING_USER = "pending_2fa_user";
+
     private final AppUserRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final TwoFactorService twoFactorService;
@@ -33,10 +36,16 @@ public class RegisterController {
         return "register";
     }
 
+    /*
+     * Konton med 2FA sparas först när användaren har bekräftat en kod från appen.
+     * Fram till dess ligger kontot bara i sessionen, så den som avbryter blir inte utelåst.
+     */
     @PostMapping("/register")
     public String register(@RequestParam String email,
                            @RequestParam String password,
-                           @RequestParam(required = false) boolean enable2fa, Model model) {
+                           @RequestParam(required = false) boolean enable2fa,
+                           HttpSession session,
+                           Model model) {
 
         if (repository.findByEmail(email).isPresent()) {
             model.addAttribute("error", "Email already exists.");
@@ -49,20 +58,50 @@ public class RegisterController {
         user.setTwoFactorEnabled(enable2fa);
 
         if (enable2fa) {
-            String secret = twoFactorService.generateSecret();
-            user.setTwoFactorSecret(secret);
+            user.setTwoFactorSecret(twoFactorService.generateSecret());
+            session.setAttribute(PENDING_USER, user);
 
-            repository.save(user);
-
-            String qrUrl = twoFactorService.generateQrUrl(email, secret);
-            String qrCode = qrCodeService.generateQrCodeBase64(qrUrl);
-
-            model.addAttribute("qrCode", qrCode);
-            model.addAttribute("secret", secret);
+            addQrCode(user, model);
             return "show-qr";
         }
 
         repository.save(user);
         return "redirect:/login";
+    }
+
+    @PostMapping("/register/confirm-2fa")
+    public String confirm2fa(@RequestParam String code,
+                             HttpSession session,
+                             Model model) {
+
+        AppUser user = (AppUser) session.getAttribute(PENDING_USER);
+
+        if (user == null) {
+            model.addAttribute("error", "Session expired. Please register again.");
+            return "register";
+        }
+
+        if (!code.matches("\\d{6}") ||
+                !twoFactorService.verifyCode(user.getTwoFactorSecret(), Integer.parseInt(code))) {
+            model.addAttribute("error", "Invalid authentication code. Try again.");
+            addQrCode(user, model);
+            return "show-qr";
+        }
+
+        if (repository.findByEmail(user.getEmail()).isPresent()) {
+            session.removeAttribute(PENDING_USER);
+            model.addAttribute("error", "Email already exists.");
+            return "register";
+        }
+
+        repository.save(user);
+        session.removeAttribute(PENDING_USER);
+
+        return "redirect:/login?registered";
+    }
+
+    private void addQrCode(AppUser user, Model model) {
+        String qrUrl = twoFactorService.generateQrUrl(user.getEmail(), user.getTwoFactorSecret());
+        model.addAttribute("qrCode", qrCodeService.generateQrCodeBase64(qrUrl));
     }
 }

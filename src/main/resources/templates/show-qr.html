@@ -14,9 +14,26 @@
     <img th:src="'data:image/png;base64,' + ${qrCode}" alt="QR Code">
 </div>
 
-<p>After scanning the QR code, you can log in using your email, password and authenticator code.</p>
+<p>Enter the 6-digit code from the app to finish creating your account. The account is not created until the code
+    has been confirmed.</p>
 
-<a th:href="@{/login}">Go to login</a>
+<p th:if="${error}" th:text="${error}" style="color:red;"></p>
+
+<form method="post" th:action="@{/register/confirm-2fa}">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+    <div>
+        <label>Authentication code</label>
+        <input type="text" name="code" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="one-time-code"
+               required>
+    </div>
+
+    <button type="submit">Create account</button>
+</form>
+
+<p>
+    <a th:href="@{/register}">Cancel</a>
+</p>
 
 </body>
 </html>
