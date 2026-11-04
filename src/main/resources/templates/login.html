@@ -10,6 +10,8 @@
 
 <p th:if="${error}" th:text="${error}" style="color:red;"></p>
 <p th:if="${message}" th:text="${message}" style="color:green;"></p>
+<p th:if="${param.reset}" style="color:green;">Password reset. You can now log in with your new password.</p>
+<p th:if="${param.deleted}" style="color:green;">Your account has been deleted.</p>
 
 <form method="post" th:action="@{/login}">
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -26,6 +28,10 @@
 
     <button type="submit">Login</button>
 </form>
+
+<p>
+    <a th:href="@{/reset-password}">Forgot password?</a>
+</p>
 
 <p>
     No account?

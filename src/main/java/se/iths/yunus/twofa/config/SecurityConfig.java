@@ -19,7 +19,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/register",
                                 "/login",
-                                "/verify-2fa"
+                                "/verify-2fa",
+                                "/reset-password"
                         ).permitAll()
                         .requestMatchers("/").authenticated()
                         .anyRequest().authenticated()
